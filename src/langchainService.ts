@@ -1,44 +1,67 @@
 /**
  * LangChain Service for Shingane AI
- * This module handles prompt construction and OpenAI integration using LangChain.
+ * This module handles prompt construction and OpenAI integration using LangChain
+ * with structured outputs via Zod schemas
  */
 
 import { ChatOpenAI } from '@langchain/openai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { EditOperation, EditOperationSchema } from './types';
 
 /**
- * Constructs a LangChain prompt combining file context and user instruction.
- *
- * The prompt structure:
- * - SystemMessage: Provides context about the file being analyzed
- * - HumanMessage: Contains the user's specific instruction/question
- * Reference: https://js.langchain.com/docs/modules/model_io/messages/
+ * Constructs a system prompt for the AI assistant
  */
-export function constructPrompt(
-	userPrompt: string,
-	fileContent: string,
+function constructSystemPrompt(
 	fileName: string,
-	languageId: string
-) {
-	const systemMessage = new SystemMessage(
-		`You are a helpful AI assistant integrated into VS Code via the Shingane AI extension.
-			You have access to the user's current file and can help with code-related questions, refactoring, explanations, and more.
+	languageId: string,
+	fileContent: string
+): string {
+	return `You are a helpful AI assistant integrated into VS Code via the Shingane AI extension.
 
-			Current file: ${fileName}
-			Language: ${languageId}
+		Current file: ${fileName}
+		Language: ${languageId}
 
-			File content:
-			\`\`\`${languageId}
-			${fileContent}
-			\`\`\`
+		File content:
+		\`\`\`${languageId}
+		${fileContent}
+		\`\`\`
 
-		Please provide helpful, accurate, and concise responses. When suggesting code changes, format them properly with markdown code blocks.`
-	);
+		INSTRUCTIONS:
+		You must edit the current file by providing a "search" text and a "replace" text.
 
-	const humanMessage = new HumanMessage(userPrompt);
+		CRITICAL RULES - READ CAREFULLY:
+		1. ALWAYS prefer PARTIAL edits over full file replacement
+		2. Copy the "search" text EXACTLY from the file - character by character, including all whitespace
+		3. The "search" text should be the SMALLEST section that contains what you want to change
+		4. The "replace" text should have the SAME indentation as the original "search" text
+		5. DO NOT add extra leading spaces or tabs to the "replace" text
+		6. Only use empty "search" (full file replacement) if the user explicitly asks to rewrite the entire file
 
-	return [systemMessage, humanMessage];
-}
+		EXAMPLES:
+
+		✓ GOOD - Partial edit with correct indentation:
+		{
+		"summary": "Add error handling to login function",
+		"search": "async function login(user) {\\n  return api.post('/login', user);\\n}",
+		"replace": "async function login(user) {\\n  try {\\n    return await api.post('/login', user);\\n  } catch (error) {\\n    console.error(error);\\n    throw error;\\n  }\\n}"
+		}
+
+		✗ BAD - Full file replacement (only when explicitly requested):
+		{
+		"summary": "Add error handling",
+		"search": "",
+		"replace": "entire file content here..."
+		}
+
+		✗ BAD - Extra indentation in replace text:
+		{
+		"summary": "Fix function",
+		"search": "function test() {\\n  return 1;\\n}",
+		"replace": "    function test() {\\n      return 2;\\n    }"
+		}
+
+		Remember: Match indentation exactly, prefer partial edits, copy search text precisely.`;
+		}
 
 /**
  * Generates AI response using OpenAI via LangChain.
@@ -46,18 +69,30 @@ export function constructPrompt(
  */
 export async function generateResponse(
 	apiKey: string,
-	messages: Array<SystemMessage | HumanMessage>,
+	userPrompt: string,
+	fileName: string,
+	languageId: string,
+	fileContent: string,
 	model: string = 'gpt-5-mini'
-): Promise<string> {
+): Promise<EditOperation> {
+
 	const chatModel = new ChatOpenAI({
 		apiKey: apiKey,
 		model: model,
 		temperature: 1,
 	});
 
-	// Reference: https://js.langchain.com/docs/modules/model_io/chat/quick_start
-	const response = await chatModel.invoke(messages);
+	// API: withStructuredOutput - forces AI to return JSON matching schema
+	// https://js.langchain.com/docs/how_to/structured_output/
+	const structuredModel = chatModel.withStructuredOutput(EditOperationSchema);
 
-	// Return the content as string
-	return response.content.toString();
+	const systemPrompt = constructSystemPrompt(fileName, languageId, fileContent);
+	const messages = [
+		new SystemMessage(systemPrompt),
+		new HumanMessage(userPrompt)
+	];
+
+	const response = await structuredModel.invoke(messages);
+
+	return response as EditOperation;
 }

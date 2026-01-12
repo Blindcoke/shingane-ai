@@ -33,7 +33,17 @@
         "command": "shingane-ai.clearApiKey",
         "title": "Shingane AI: Clear OpenAI API Key"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Shingane AI",
+      "properties": {
+        "shingane-ai.showEditPreview": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show diff preview before applying AI-generated edits."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -55,6 +65,9 @@
   },
   "dependencies": {
     "@langchain/core": "^1.1.12",
-    "@langchain/openai": "^1.2.1"
+    "@langchain/openai": "^1.2.1",
+    "@types/diff": "^7.0.2",
+    "diff": "^8.0.2",
+    "zod": "^4.3.5"
   }
 }

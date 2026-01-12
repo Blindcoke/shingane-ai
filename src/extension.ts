@@ -6,6 +6,7 @@
 import * as vscode from 'vscode';
 import { createShinganeParticipant } from './chatParticipant';
 import { ConfigurationManager } from './configurationManager';
+import { registerEditCommands } from './fileEditingService';
 
 /**
  * Called when the extension is activated.
@@ -53,6 +54,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(configureApiKeyCommand, clearApiKeyCommand);
+
+	registerEditCommands(context);
 
 	const participant = createShinganeParticipant(context, configManager);
 	context.subscriptions.push(participant);

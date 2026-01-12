@@ -9,9 +9,9 @@
  */
 
 import * as vscode from 'vscode';
-import { constructPrompt, generateResponse } from './langchainService';
+import { generateResponse } from './langchainService';
 import { ConfigurationManager } from './configurationManager';
-
+import { applyEdit } from './fileEditingService';
 /**
  * Creates and returns a chat participant for the Shingane AI extension.
  * The chat participant listens for @shingane mentions in VS Code's chat interface
@@ -59,15 +59,30 @@ export function createShinganeParticipant(
 				return;
 			}
 
-			// 4. Construct LangChain prompt combining file context and user instruction
-			const messages = constructPrompt(userPrompt, fileContent, fileName, languageId);
-
-			// 5. Send to OpenAI and display response
+			// 4. Send to OpenAI with structured output
 			stream.markdown(`🤖 **Analyzing ${fileName}...**\n\n`);
 
 			try {
-				const aiResponse = await generateResponse(apiKey, messages);
-				stream.markdown(aiResponse);
+				const operation = await generateResponse(
+					apiKey,
+					userPrompt,
+					fileName,
+					languageId,
+					fileContent
+				);
+
+				stream.markdown(`🔄 **${operation.summary}**\n\n`);
+
+				const config = vscode.workspace.getConfiguration('shingane-ai');
+				const showPreview = config.get<boolean>('showEditPreview', true);
+
+				const result = await applyEdit(document, operation, showPreview);
+
+				if (result.success) {
+					stream.markdown(`✅ ${result.message}`);
+				} else {
+					stream.markdown(`❌ ${result.message}`);
+				}
 
 			} catch (error) {
 				if (error instanceof Error) {
