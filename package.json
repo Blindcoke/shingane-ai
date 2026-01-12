@@ -8,11 +8,20 @@
     "vscode": "^1.108.0"
   },
   "categories": [
-    "Other"
+    "AI",
+    "Chat"
   ],
-  "activationEvents": [],
+  "activationEvents": ["onChatParticipant:shingane-ai.shingane"],
   "main": "./out/extension.js",
   "contributes": {
+    "chatParticipants": [
+      {
+        "id": "shingane-ai.shingane",
+        "name": "shingane",
+        "description": "Shingane AI Assistant",
+        "isSticky": true
+      }
+    ],
     "commands": [
       {
         "command": "shingane-ai.helloWorld",

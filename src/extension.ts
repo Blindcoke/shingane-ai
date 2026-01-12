@@ -1,25 +1,26 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+/**
+ * Shingane AI Extension - Main Entry Point
+ * This VS Code extension provides an AI assistant accessible via @shingane in chat.
+ */
+
 import * as vscode from 'vscode';
+import { createShinganeParticipant } from './chatParticipant';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+/**
+ * Called when the extension is activated.
+ *
+ * Activation occurs based on the activationEvents defined in package.json.
+ * Set to "onChatParticipant" for lazy-loading the extension only when the user invokes @shingane.
+ * @see https://code.visualstudio.com/api/references/vscode-api#ExtensionContext
+ */
 export function activate(context: vscode.ExtensionContext) {
+	console.log('Shingane AI extension is activating...');
+	// This makes the extension available in VS Code's chat interface
+	const participant = createShinganeParticipant(context);
+	context.subscriptions.push(participant);
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "shingane-ai" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('shingane-ai.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from shingane-ai!');
-	});
-
-	context.subscriptions.push(disposable);
+	console.log('Shingane AI chat participant registered: @shingane');
+	console.log('Shingane AI extension is now active!');
 }
 
 // This method is called when your extension is deactivated

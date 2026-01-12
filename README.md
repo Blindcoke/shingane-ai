@@ -6,7 +6,7 @@ context together with the user’s prompt.
 
 ## TODO
 
-- [ ] Register the `@shingane` command and activation logic
+- [x] Register the `@shingane` command and activation logic
 - [ ] Capture user prompt and active editor file content
 - [ ] Construct a LangChain prompt combining file context and user instruction
 - [ ] Integrate OpenAI via LangChain (configurable API key)
