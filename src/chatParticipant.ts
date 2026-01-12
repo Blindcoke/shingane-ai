@@ -9,15 +9,20 @@
  */
 
 import * as vscode from 'vscode';
+import { constructPrompt, generateResponse } from './langchainService';
+import { ConfigurationManager } from './configurationManager';
 
 /**
  * Creates and returns a chat participant for the Shingane AI extension.
  * The chat participant listens for @shingane mentions in VS Code's chat interface
  * and processes user requests.
+ * @param context - Extension context
+ * @param configManager - Configuration manager for API key handling
  * @see https://code.visualstudio.com/api/references/vscode-api#chat.createChatParticipant
  */
 export function createShinganeParticipant(
-	context: vscode.ExtensionContext
+	context: vscode.ExtensionContext,
+	configManager: ConfigurationManager
 ): vscode.Disposable {
 
 	// Create a chat participant with ID matching package.json contribution
@@ -38,20 +43,47 @@ export function createShinganeParticipant(
 			// Reference: https://code.visualstudio.com/api/references/vscode-api#window.activeTextEditor
 			const editor = vscode.window.activeTextEditor;
 			if (!editor) {
-				throw new Error("No active editor open");
+				stream.markdown('⚠️ **No active editor found.** Please open a file and try again.');
+				return;
 			}
-
 			const document = editor.document;
 			const fileContent = document.getText();
 			const fileName = document.fileName;
 			const languageId = document.languageId;
 
-			// Display captured context
-			stream.markdown(`🤖 **Shingane AI**\n\n`);
-			stream.markdown(`📄 **File:** \`${fileName}\`\n`);
-			stream.markdown(`🔤 **Language:** \`${languageId}\`\n`);
-			stream.markdown(`💬 **Your prompt:** "${userPrompt}"\n\n`);
-			stream.markdown(`**File content preview:**\n\`\`\`${languageId}\n${fileContent.substring(0, 500)}${fileContent.length > 500 ? '...' : ''}\n\`\`\``);
+			// 3. Check for API key
+			const apiKey = await configManager.getApiKey();
+			if (!apiKey) {
+				stream.markdown('⚠️ **OpenAI API key not configured.**\n\n');
+				stream.markdown('Please configure your API key by running: `Developer: Reload Window` and entering your key when prompted.');
+				return;
+			}
+
+			// 4. Construct LangChain prompt combining file context and user instruction
+			const messages = constructPrompt(userPrompt, fileContent, fileName, languageId);
+
+			// 5. Send to OpenAI and display response
+			stream.markdown(`🤖 **Analyzing ${fileName}...**\n\n`);
+
+			try {
+				const aiResponse = await generateResponse(apiKey, messages);
+				stream.markdown(aiResponse);
+
+			} catch (error) {
+				if (error instanceof Error) {
+					if (error.message.includes('API key') || error.message.includes('credentials')) {
+						stream.markdown('❌ **Invalid API key.** Please reconfigure your OpenAI API key.');
+					} else if (error.message.includes('rate limit') || error.message.includes('429')) {
+						stream.markdown('⏱️ **Rate limit reached.** Please try again in a moment.');
+					} else if (error.message.includes('quota') || error.message.includes('billing')) {
+						stream.markdown('💳 **Quota exceeded.** Please check your OpenAI billing at https://platform.openai.com/account/billing');
+					} else {
+						stream.markdown(`❌ **Error:** ${error.message}`);
+					}
+				} else {
+					stream.markdown('❌ An unknown error occurred. Please try again.');
+				}
+			}
 		}
 	);
 

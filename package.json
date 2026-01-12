@@ -11,7 +11,9 @@
     "AI",
     "Chat"
   ],
-  "activationEvents": ["onChatParticipant:shingane-ai.shingane"],
+  "activationEvents": [
+    "onChatParticipant:shingane-ai.shingane"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "chatParticipants": [
@@ -24,8 +26,12 @@
     ],
     "commands": [
       {
-        "command": "shingane-ai.helloWorld",
-        "title": "Shingane AI: Hello World"
+        "command": "shingane-ai.configureApiKey",
+        "title": "Shingane AI: Configure OpenAI API Key"
+      },
+      {
+        "command": "shingane-ai.clearApiKey",
+        "title": "Shingane AI: Clear OpenAI API Key"
       }
     ]
   },
@@ -38,13 +44,17 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.108.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "typescript-eslint": "^8.52.0",
+    "@types/vscode": "^1.108.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2"
+    "typescript-eslint": "^8.52.0"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.1.12",
+    "@langchain/openai": "^1.2.1"
   }
 }

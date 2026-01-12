@@ -8,8 +8,8 @@ context together with the user’s prompt.
 
 - [x] Register the `@shingane` command and activation logic
 - [x] Capture user prompt and active editor file content
-- [ ] Construct a LangChain prompt combining file context and user instruction
-- [ ] Integrate OpenAI via LangChain (configurable API key)
-- [ ] Display AI response in VS Code (output channel or message)
+- [x] Construct a LangChain prompt combining file context and user instruction
+- [x] Integrate OpenAI via LangChain (configurable API key)
+- [x] Display AI response in VS Code (output channel or message)
 - [ ] Document setup and usage instructions
-- [ ] Add basic error handling (missing API key, no active editor)
+- [x] Add basic error handling (missing API key, no active editor)
