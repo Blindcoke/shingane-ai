@@ -7,7 +7,7 @@ context together with the user’s prompt.
 ## TODO
 
 - [x] Register the `@shingane` command and activation logic
-- [ ] Capture user prompt and active editor file content
+- [x] Capture user prompt and active editor file content
 - [ ] Construct a LangChain prompt combining file context and user instruction
 - [ ] Integrate OpenAI via LangChain (configurable API key)
 - [ ] Display AI response in VS Code (output channel or message)

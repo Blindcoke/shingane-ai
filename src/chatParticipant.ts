@@ -30,9 +30,28 @@ export function createShinganeParticipant(
 			stream: vscode.ChatResponseStream,
 			token: vscode.CancellationToken
 		) => {
-			// For now, just acknowledge the request
-			stream.markdown(`👋 Hello! I'm Shingane AI. Full functionality coming soon!\n\n`);
-			stream.markdown(`You said: "${request.prompt}"`);
+			// 1. Capture user prompt from the request
+			// Reference: https://code.visualstudio.com/api/references/vscode-api#ChatRequest
+			const userPrompt = request.prompt;
+
+			// 2. Capture active editor file content
+			// Reference: https://code.visualstudio.com/api/references/vscode-api#window.activeTextEditor
+			const editor = vscode.window.activeTextEditor;
+			if (!editor) {
+				throw new Error("No active editor open");
+			}
+
+			const document = editor.document;
+			const fileContent = document.getText();
+			const fileName = document.fileName;
+			const languageId = document.languageId;
+
+			// Display captured context
+			stream.markdown(`🤖 **Shingane AI**\n\n`);
+			stream.markdown(`📄 **File:** \`${fileName}\`\n`);
+			stream.markdown(`🔤 **Language:** \`${languageId}\`\n`);
+			stream.markdown(`💬 **Your prompt:** "${userPrompt}"\n\n`);
+			stream.markdown(`**File content preview:**\n\`\`\`${languageId}\n${fileContent.substring(0, 500)}${fileContent.length > 500 ? '...' : ''}\n\`\`\``);
 		}
 	);
 
