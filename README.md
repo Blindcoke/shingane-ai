@@ -13,12 +13,12 @@ Shingane is a VS Code extension that provides an AI assistant integrated directl
 - [x] Make the model to be able to edit the files and only write summary in the chat
 - [x] Add basic error handling (missing API key, no active editor)
 - [x] Document setup and usage instructions
-- [ ] Review and refactor the code and docs
-- [ ] Finilize error handling
+- [x] Review and refactor the code and docs
+- [x] Finilize error handling
 
 ### Additional TODO
 - [ ] Add the multiple files editing
-- [ ] Add tests
+- [x] Add tests
 - [ ] Update the Additional TODO
 
 ## Features
