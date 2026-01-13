@@ -6,7 +6,7 @@
 
 import { ChatOpenAI } from '@langchain/openai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { EditOperation, EditOperationSchema } from './types';
+import { EditOperation, EditOperationSchema } from '../types';
 
 /**
  * Constructs a system prompt for the AI assistant
@@ -92,7 +92,22 @@ export async function generateResponse(
 		new HumanMessage(userPrompt)
 	];
 
-	const response = await structuredModel.invoke(messages);
-
-	return response as EditOperation;
+	try {
+		const response = await structuredModel.invoke(messages);
+		return response as EditOperation;
+	} catch (error) {
+		console.error('[Shingane AI] Error generating response:', error);
+		if (error instanceof Error) {
+			if (error.message.includes('API key') || error.message.includes('401')) {
+				throw new Error('Invalid API key. Please check your credentials.');
+			}
+			if (error.message.includes('rate limit') || error.message.includes('429')) {
+				throw new Error('Rate limit reached. Please try again later.');
+			}
+			if (error.message.includes('quota') || error.message.includes('billing')) {
+				throw new Error('Quota exceeded. Please check your OpenAI billing details.');
+			}
+		}
+		throw new Error('Failed to get response from AI. Please check the console for details.');
+	}
 }

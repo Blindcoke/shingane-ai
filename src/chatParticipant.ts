@@ -9,9 +9,9 @@
  */
 
 import * as vscode from 'vscode';
-import { generateResponse } from './langchainService';
-import { ConfigurationManager } from './configurationManager';
-import { applyEdit } from './fileEditingService';
+import { generateResponse } from './services/langchainService';
+import { ConfigurationManager } from './managers/configurationManager';
+import { applyEdit } from './services/fileEditingService';
 /**
  * Creates and returns a chat participant for the Shingane AI extension.
  * The chat participant listens for @shingane mentions in VS Code's chat interface
@@ -85,18 +85,17 @@ export function createShinganeParticipant(
 				}
 
 			} catch (error) {
-				if (error instanceof Error) {
-					if (error.message.includes('API key') || error.message.includes('credentials')) {
-						stream.markdown('❌ **Invalid API key.** Please reconfigure your OpenAI API key.');
-					} else if (error.message.includes('rate limit') || error.message.includes('429')) {
-						stream.markdown('⏱️ **Rate limit reached.** Please try again in a moment.');
-					} else if (error.message.includes('quota') || error.message.includes('billing')) {
-						stream.markdown('💳 **Quota exceeded.** Please check your OpenAI billing at https://platform.openai.com/account/billing');
-					} else {
-						stream.markdown(`❌ **Error:** ${error.message}`);
-					}
+				const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+				console.error('[Shingane AI] Chat participant error:', errorMessage);
+
+				if (errorMessage.includes('API key')) {
+					stream.markdown('❌ **Invalid API key.** Please reconfigure your OpenAI API key.');
+				} else if (errorMessage.includes('rate limit')) {
+					stream.markdown('⏱️ **Rate limit reached.** Please try again in a moment.');
+				} else if (errorMessage.includes('quota')) {
+					stream.markdown('💳 **Quota exceeded.** Please check your OpenAI billing status.');
 				} else {
-					stream.markdown('❌ An unknown error occurred. Please try again.');
+					stream.markdown(`❌ **An error occurred:** ${errorMessage}`);
 				}
 			}
 		}
